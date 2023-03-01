@@ -20,6 +20,14 @@ in {
     xsession.windowManager.xmonad = {
       enable = mkEnableOption "xmonad window manager";
 
+      pkg = mkOption {
+        default = null;
+        type = types.nullOr types.path;
+        description = ''
+          A package containing an executable called xmonad-$SYSTEM.
+        '';
+      };
+
       haskellPackages = mkOption {
         default = pkgs.haskellPackages;
         defaultText = literalExpression "pkgs.haskellPackages";
@@ -104,7 +112,7 @@ in {
 
   config = let
 
-    xmonadBin = "${
+    xmonadPkg = cfg.pkg or
         pkgs.runCommandLocal "xmonad-compile" {
           nativeBuildInputs = [ xmonad ];
         } ''
@@ -140,7 +148,8 @@ in {
             mv "$XMONAD_CACHE_DIR/xmonad-${pkgs.stdenv.hostPlatform.system}" $out/bin/
           fi
         ''
-      }/bin/xmonad-${pkgs.stdenv.hostPlatform.system}";
+
+    xmonadBin = "${xmonadPkg}/bin/xmonad-${pkgs.stdenv.hostPlatform.system}";
 
   in mkIf cfg.enable (mkMerge [
     {
